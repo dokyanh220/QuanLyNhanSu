@@ -411,6 +411,11 @@ textarea {
 /* Header styles */
 .app-header {
   padding: 30px 20px;
+  background-color: #006e2a;
+  font-size: 24px;
+  height: 36px;
+  display: flex;
+  align-items: center;
 }
 
 .header-content {
