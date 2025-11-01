@@ -1,47 +1,15 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { addEmployee, editEmployee, selectLoading } from '../redux/slice/employeeSlice';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { useConfirm } from 'material-ui-confirm';
+import { toast } from 'react-toastify';
+import { employeeSchema, validateWithJoi, DEPARTMENTS, POSITIONS } from '../utils/employeeSchema';
 import './Employee.css';
-
-const DEPARTMENTS = [
-  'Engineering',
-  'Quality Assurance',
-  'Product',
-  'Finance',
-  'Operations',
-  'Human Resources',
-  'Design',
-  'Sales',
-  'Marketing'
-];
-
-const POSITIONS = [
-  'Software Engineer',
-  'Senior Software Engineer',
-  'Lead Software Engineer',
-  'QA Engineer',
-  'Senior QA Engineer',
-  'Product Manager',
-  'Senior Product Manager',
-  'Data Analyst',
-  'Senior Data Analyst',
-  'DevOps Engineer',
-  'Senior DevOps Engineer',
-  'HR Specialist',
-  'HR Manager',
-  'UI/UX Designer',
-  'Senior UI/UX Designer',
-  'Accountant',
-  'Senior Accountant',
-  'Sales Executive',
-  'Sales Manager',
-  'Marketing Manager',
-  'Senior Marketing Manager'
-];
 
 function EmployeeForm({ employee, onClose }) {
   const dispatch = useDispatch();
   const loading = useSelector(selectLoading);
+  const confirm = useConfirm();
 
   const initialValues = {
     fullName: employee?.fullName || '',
@@ -51,68 +19,57 @@ function EmployeeForm({ employee, onClose }) {
     startDate: employee?.startDate || ''
   };
 
-  const validate = (values) => {
-    const errors = {};
-
-    if (!values.fullName) {
-      errors.fullName = 'Họ và tên là bắt buộc';
-    } else if (values.fullName.length < 3) {
-      errors.fullName = 'Họ và tên phải có ít nhất 3 ký tự';
-    }
-
-    if (!values.email) {
-      errors.email = 'Email là bắt buộc';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
-      errors.email = 'Email không hợp lệ';
-    }
-
-    if (!values.department) {
-      errors.department = 'Vui lòng chọn phòng ban';
-    }
-
-    if (!values.position) {
-      errors.position = 'Vui lòng chọn chức vụ';
-    }
-
-    if (!values.startDate) {
-      errors.startDate = 'Ngày vào làm là bắt buộc';
-    }
-
-    return errors;
-  };
-
-
-  const handleFormSubmit = (values, { setSubmitting }) => {
-    if (employee) {
-    
-      if (window.confirm(`Bạn có chắc chắn muốn cập nhật thông tin nhân viên "${values.fullName}"?`)) {
-        dispatch(editEmployee({ ...values, id: employee.id })).then((result) => {
-          setSubmitting(false);
-          if (result.meta.requestStatus === 'fulfilled') {
-            alert('Cập nhật thành công!');
-            onClose();
-          } else {
-            alert('Có lỗi!');
-          }
+  const handleFormSubmit = async (values, { setSubmitting }) => {
+    try {
+      if (employee) {
+        await confirm({
+          title: 'Xác nhận cập nhật',
+          description: `Bạn có chắc chắn muốn cập nhật thông tin nhân viên "${values.fullName}"?`,
+          confirmationText: 'Cập nhật',
+          cancellationText: 'Hủy'
         });
-      } else {
+
+        const result = await dispatch(editEmployee({ ...values, id: employee.id }));
         setSubmitting(false);
-      }
-    } else {
-    
-      if (window.confirm(`Bạn có chắc chắn muốn thêm nhân viên "${values.fullName}"?`)) {
-        dispatch(addEmployee(values)).then((result) => {
-          setSubmitting(false);
-          if (result.meta.requestStatus === 'fulfilled') {
-            alert('Thêm nhân viên thành công!');
-            onClose();
-          } else {
-            alert('Có lỗi!');
-          }
+        
+        if (result.meta.requestStatus === 'fulfilled') {
+          toast.success('Cập nhật thông tin nhân viên thành công!', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          onClose();
+        } else {
+          toast.error('Có lỗi xảy ra khi cập nhật thông tin nhân viên!', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
+      } else {
+        await confirm({
+          title: 'Xác nhận thêm mới',
+          description: `Bạn có chắc chắn muốn thêm nhân viên "${values.fullName}"?`,
+          confirmationText: 'Thêm',
+          cancellationText: 'Hủy'
         });
-      } else {
+
+        const result = await dispatch(addEmployee(values));
         setSubmitting(false);
+        
+        if (result.meta.requestStatus === 'fulfilled') {
+          toast.success('Thêm nhân viên mới thành công!', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          onClose();
+        } else {
+          toast.error('Có lỗi xảy ra khi thêm nhân viên!', {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       }
+    } catch {
+      setSubmitting(false);
     }
   };
 
@@ -124,11 +81,11 @@ function EmployeeForm({ employee, onClose }) {
         </h2>
         <Formik
           initialValues={initialValues}
-          validate={validate}
+          validate={validateWithJoi(employeeSchema)}
           onSubmit={handleFormSubmit}
           enableReinitialize
         >
-          {({ errors, touched, isSubmitting, dirty }) => (
+          {({ errors, touched, isSubmitting }) => (
             <>
               <Form>
                 <div className="form-row">

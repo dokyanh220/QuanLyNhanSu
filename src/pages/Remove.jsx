@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useConfirm } from 'material-ui-confirm';
+import { toast } from 'react-toastify';
 import { getEmployee, removeEmployee, selectEmployeeDetail, selectLoading } from '../redux/slice/employeeSlice';
 
 function Remove() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const confirm = useConfirm();
   const employee = useSelector(selectEmployeeDetail);
   const loading = useSelector(selectLoading);
   const [loadingData, setLoadingData] = useState(true);
@@ -20,16 +23,50 @@ function Remove() {
     }
   }, [id, dispatch]);
 
-  const handleConfirmDelete = () => {
-    if (window.confirm(`⚠️ Bạn có chắc chắn muốn xóa nhân viên "${employee.fullName}"?\n\nThao tác này không thể hoàn tác!`)) {
-      dispatch(removeEmployee(id)).then((result) => {
-        if (result.meta.requestStatus === 'fulfilled') {
-          alert('✅ Xóa nhân viên thành công!');
-          navigate('/employees');
-        } else {
-          alert('❌ Có lỗi xảy ra khi xóa nhân viên!');
+  const handleConfirmDelete = async () => {
+    try {
+      await confirm({
+        title: '⚠️ Xác nhận xóa nhân viên',
+        description: (
+          <div>
+            <p style={{ marginBottom: '15px', fontWeight: 'bold' }}>
+              Bạn có chắc chắn muốn xóa nhân viên sau?
+            </p>
+            <div style={{ padding: '10px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
+              <p style={{ margin: '5px 0' }}><strong>Họ và tên:</strong> {employee.fullName}</p>
+              <p style={{ margin: '5px 0' }}><strong>Email:</strong> {employee.email}</p>
+              <p style={{ margin: '5px 0' }}><strong>Phòng ban:</strong> {employee.department}</p>
+              <p style={{ margin: '5px 0' }}><strong>Vị trí:</strong> {employee.position}</p>
+            </div>
+            <p style={{ marginTop: '15px', color: '#c62828', fontWeight: 'bold' }}>
+              ⚠️ Cảnh báo: Thao tác này không thể hoàn tác!
+            </p>
+          </div>
+        ),
+        confirmationText: 'Xóa',
+        cancellationText: 'Hủy',
+        confirmationButtonProps: { 
+          variant: 'contained', 
+          color: 'error' 
         }
       });
+
+      const result = await dispatch(removeEmployee(id));
+      
+      if (result.meta.requestStatus === 'fulfilled') {
+        toast.success('Xóa nhân viên thành công!', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        navigate('/employees');
+      } else {
+        toast.error('Có lỗi xảy ra khi xóa nhân viên!', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+    } catch {
+      // User cancelled
     }
   };
 

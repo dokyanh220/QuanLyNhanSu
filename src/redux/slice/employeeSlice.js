@@ -12,13 +12,10 @@ const initialState = {
   value: null,
   loading: false,
   error: null,
-  success: false,
 };
 
 export const getEmployees = createAsyncThunk("employee/list", async () => {
   const response = await findEmployees();
-  console.log('API Response:', response);
-  console.log('API Data:', response.data);
   return response.data;
 });
 
@@ -45,122 +42,90 @@ export const removeEmployee = createAsyncThunk("employee/remove", async (employe
 export const employeeSlice = createSlice({
   name: "employee",
   initialState,
-  reducers: {
-    setLoading: (state, action) => {
-      state.loading = action.payload;
-    },
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    setSuccess: (state, action) => {
-      state.success = action.payload;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
+      // Get Employees
       .addCase(getEmployees.pending, (state) => {
-        state.success = false;
         state.loading = true;
-        state.error = false;
+        state.error = null;
       })
       .addCase(getEmployees.rejected, (state, action) => {
-        state.success = false;
         state.loading = false;
-        state.error = action.error;
+        state.error = action.error.message;
       })
       .addCase(getEmployees.fulfilled, (state, action) => {
-        state.success = true;
         state.loading = false;
         state.values = action.payload;
-        state.error = false;
+        state.error = null;
       })
-
+      
+      // Get Employee
       .addCase(getEmployee.pending, (state) => {
-        state.success = false;
         state.loading = true;
-        state.error = false;
+        state.error = null;
       })
       .addCase(getEmployee.rejected, (state, action) => {
-        state.success = false;
         state.loading = false;
-        state.error = action.error;
+        state.error = action.error.message;
       })
       .addCase(getEmployee.fulfilled, (state, action) => {
-        state.success = true;
         state.loading = false;
         state.value = action.payload;
-        state.error = false;
+        state.error = null;
       })
-
+      
+      // Add Employee
       .addCase(addEmployee.pending, (state) => {
-        state.success = false;
         state.loading = true;
-        state.error = false;
+        state.error = null;
       })
       .addCase(addEmployee.rejected, (state, action) => {
-        state.success = false;
         state.loading = false;
-        state.error = action.error;
+        state.error = action.error.message;
       })
       .addCase(addEmployee.fulfilled, (state, action) => {
-        state.success = true;
         state.loading = false;
         state.value = action.payload;
-        state.error = false;
+        state.error = null;
       })
-
+      
+      // Edit Employee
       .addCase(editEmployee.pending, (state) => {
-        state.success = false;
         state.loading = true;
-        state.error = false;
+        state.error = null;
       })
       .addCase(editEmployee.rejected, (state, action) => {
-        state.success = false;
         state.loading = false;
-        state.error = action.error;
+        state.error = action.error.message;
       })
       .addCase(editEmployee.fulfilled, (state, action) => {
-        state.success = true;
         state.loading = false;
         state.value = action.payload;
-        state.error = false;
+        state.error = null;
       })
-
+      
+      // Remove Employee
       .addCase(removeEmployee.pending, (state) => {
-        state.success = false;
         state.loading = true;
-        state.error = false;
+        state.error = null;
       })
       .addCase(removeEmployee.rejected, (state, action) => {
-        state.success = false;
         state.loading = false;
-        state.error = action.error;
+        state.error = action.error.message;
       })
       .addCase(removeEmployee.fulfilled, (state, action) => {
-        state.success = true;
         state.loading = false;
         state.value = action.payload;
-        state.error = false;
+        state.error = null;
       });
   },
 });
 
-export const { setLoading, setError, setSuccess } = employeeSlice.actions;
-
+// Selectors
 export const selectLoading = (state) => state.employee.loading;
 export const selectError = (state) => state.employee.error;
-export const selectSuccess = (state) => state.employee.success;
 export const selectEmployeeList = (state) => state.employee.values;
 export const selectEmployeeDetail = (state) => state.employee.value;
-export const selectEmployeeAdded = (state) => state.employee.value;
-export const selectEmployeeEdited = (state) => state.employee.value;
-export const selectEmployeeRemoved = (state) => state.employee.value;
-
-export const setLoadingTrueIfCalled = (isCalled) => (dispatch, getState) => {
-  const currentValue = selectLoading(getState());
-  if (currentValue === isCalled) {
-    dispatch(setLoading(true));
-  }
-};
 
 export default employeeSlice.reducer;

@@ -26,15 +26,8 @@ function EmployeeList() {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   useEffect(() => {
-    console.log('Fetching employees...');
-    console.log('Departments:', DEPARTMENTS);
     dispatch(getEmployees());
   }, [dispatch]);
-
-  useEffect(() => {
-    console.log('Employees data:', employees);
-  }, [employees]);
-
 
   const filteredAndSortedEmployees = useMemo(() => {
     if (!employees) return [];

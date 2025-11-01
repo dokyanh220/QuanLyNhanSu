@@ -13,74 +13,40 @@ const axiosInstance = axios.create({
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
-  (config) => {
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
-    return config;
-  },
-  (error) => {
-    console.error('Request Error:', error);
-    return Promise.reject(error);
-  }
+  (config) => config,
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor
 axiosInstance.interceptors.response.use(
-  (response) => {
-    console.log('API Response:', response.status, response.config.url);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('Response Error:', error.response?.status, error.message);
-    return Promise.reject(error);
+    const errorMessage = error.response?.data?.message || error.message;
+    return Promise.reject(new Error(errorMessage));
   }
 );
 
 export const findEmployees = async () => {
-  try {
-    const response = await axiosInstance.get('/employee');
-    return response;
-  } catch (error) {
-    console.error("Get employees API error:", error);
-    throw error;
-  }
+  const response = await axiosInstance.get('/employee');
+  return response;
 };
 
 export const findEmployee = async (employeeId) => {
-  try {
-    const response = await axiosInstance.get(`/employee/${employeeId}`);
-    return response;
-  } catch (error) {
-    console.error("Find employee API error:", error);
-    throw error;
-  }
+  const response = await axiosInstance.get(`/employee/${employeeId}`);
+  return response;
 };
 
 export const createEmployee = async (employee) => {
-  try {
-    const response = await axiosInstance.post('/employee', employee);
-    return response;
-  } catch (error) {
-    console.error("Create employee API error:", error);
-    throw error;
-  }
+  const response = await axiosInstance.post('/employee', employee);
+  return response;
 };
 
 export const updateEmployee = async (employee) => {
-  try {
-    const response = await axiosInstance.put(`/employee/${employee.id}`, employee);
-    return response;
-  } catch (error) {
-    console.error("Update employee API error:", error);
-    throw error;
-  }
+  const response = await axiosInstance.put(`/employee/${employee.id}`, employee);
+  return response;
 };
 
 export const deleteEmployee = async (employeeId) => {
-  try {
-    const response = await axiosInstance.delete(`/employee/${employeeId}`);
-    return response;
-  } catch (error) {
-    console.error("Delete employee API error:", error);
-    throw error;
-  }
+  const response = await axiosInstance.delete(`/employee/${employeeId}`);
+  return response;
 };
