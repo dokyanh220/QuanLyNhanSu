@@ -43,7 +43,6 @@ function EmployeeForm({ employee, onClose }) {
   const dispatch = useDispatch();
   const loading = useSelector(selectLoading);
 
-  // Initial values cho Formik
   const initialValues = {
     fullName: employee?.fullName || '',
     email: employee?.email || '',
@@ -52,7 +51,6 @@ function EmployeeForm({ employee, onClose }) {
     startDate: employee?.startDate || ''
   };
 
-  // Validate function cho Formik
   const validate = (values) => {
     const errors = {};
 
@@ -83,10 +81,10 @@ function EmployeeForm({ employee, onClose }) {
     return errors;
   };
 
-  // Handle submit với Formik
+
   const handleFormSubmit = (values, { setSubmitting }) => {
     if (employee) {
-      // Edit mode - Xác nhận sửa
+    
       if (window.confirm(`Bạn có chắc chắn muốn cập nhật thông tin nhân viên "${values.fullName}"?`)) {
         dispatch(editEmployee({ ...values, id: employee.id })).then((result) => {
           setSubmitting(false);
@@ -101,7 +99,7 @@ function EmployeeForm({ employee, onClose }) {
         setSubmitting(false);
       }
     } else {
-      // Add mode - Xác nhận thêm
+    
       if (window.confirm(`Bạn có chắc chắn muốn thêm nhân viên "${values.fullName}"?`)) {
         dispatch(addEmployee(values)).then((result) => {
           setSubmitting(false);

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { getEmployees, selectEmployeeList, selectLoading } from '../redux/slice/employeeSlice';
 import './Employee.css';
 
-// Danh sách phòng ban tĩnh (đặt ngoài component để tránh re-render)
 const DEPARTMENTS = [
   'Engineering',
   'Quality Assurance',
@@ -36,11 +35,11 @@ function EmployeeList() {
     console.log('Employees data:', employees);
   }, [employees]);
 
-  // Lọc và sắp xếp danh sách nhân viên
+
   const filteredAndSortedEmployees = useMemo(() => {
     if (!employees) return [];
 
-    // Lọc theo tên hoặc email
+  
     let filtered = employees.filter((employee) => {
       const searchLower = searchTerm.toLowerCase();
       const fullNameMatch = employee.fullName?.toLowerCase().includes(searchLower);
@@ -48,12 +47,12 @@ function EmployeeList() {
       return fullNameMatch || emailMatch;
     });
 
-    // Lọc theo phòng ban
+  
     if (selectedDepartment !== 'all') {
       filtered = filtered.filter(employee => employee.department === selectedDepartment);
     }
 
-    // Sắp xếp theo ngày vào làm
+  
     filtered.sort((a, b) => {
       const dateA = new Date(a.startDate);
       const dateB = new Date(b.startDate);
