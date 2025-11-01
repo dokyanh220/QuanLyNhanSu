@@ -64,10 +64,15 @@ function EmployeeList() {
     return filtered;
   }, [employees, searchTerm, sortOrder, selectedDepartment]);
 
-  const handleDelete = (employeeId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
-      dispatch(removeEmployee(employeeId)).then(() => {
-        dispatch(getEmployees());
+  const handleDelete = (employee) => {
+    if (window.confirm(`⚠️ Bạn có chắc chắn muốn xóa nhân viên "${employee.fullName}"?\n\nThao tác này không thể hoàn tác!`)) {
+      dispatch(removeEmployee(employee.id)).then((result) => {
+        if (result.meta.requestStatus === 'fulfilled') {
+          alert('✅ Xóa nhân viên thành công!');
+          dispatch(getEmployees());
+        } else {
+          alert('❌ Có lỗi xảy ra khi xóa nhân viên!');
+        }
       });
     }
   };
@@ -184,12 +189,14 @@ function EmployeeList() {
                     <button
                       className="btn btn-edit"
                       onClick={() => handleEdit(employee)}
+                      title="Chỉnh sửa thông tin nhân viên"
                     >
                       Sửa
                     </button>
                     <button
                       className="btn btn-delete"
-                      onClick={() => handleDelete(employee.id)}
+                      onClick={() => handleDelete(employee)}
+                      title="Xóa nhân viên"
                     >
                       Xóa
                     </button>

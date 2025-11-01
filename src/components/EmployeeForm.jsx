@@ -53,6 +53,14 @@ function EmployeeForm({ employee, onClose }) {
     startDate: ''
   });
 
+  const [initialData, setInitialData] = useState({
+    fullName: '',
+    email: '',
+    department: '',
+    position: '',
+    startDate: ''
+  });
+
   useEffect(() => {
     console.log('Employee data:', employee);
     if (employee) {
@@ -69,22 +77,27 @@ function EmployeeForm({ employee, onClose }) {
       console.log('Setting department:', validDepartment, 'Original:', employee.department);
       console.log('Setting position:', validPosition, 'Original:', employee.position);
       
-      setFormData({
+      const data = {
         fullName: employee.fullName || '',
         email: employee.email || '',
         department: validDepartment,
         position: validPosition,
         startDate: employee.startDate || ''
-      });
+      };
+      
+      setFormData(data);
+      setInitialData(data);
     } else {
       // Reset form khi thêm mới
-      setFormData({
+      const emptyData = {
         fullName: '',
         email: '',
         department: '',
         position: '',
         startDate: ''
-      });
+      };
+      setFormData(emptyData);
+      setInitialData(emptyData);
     }
   }, [employee]);
 
@@ -97,19 +110,46 @@ function EmployeeForm({ employee, onClose }) {
     }));
   };
 
+  const handleClose = () => {
+    // Kiểm tra xem có thay đổi nào chưa lưu không
+    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialData);
+    
+    if (hasChanges) {
+      if (window.confirm('⚠️ Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn đóng?')) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     if (employee) {
-      // Edit mode
-      dispatch(editEmployee({ ...formData, id: employee.id })).then(() => {
-        onClose();
-      });
+      // Edit mode - Xác nhận sửa
+      if (window.confirm(`Bạn có chắc chắn muốn cập nhật thông tin nhân viên "${formData.fullName}"?`)) {
+        dispatch(editEmployee({ ...formData, id: employee.id })).then((result) => {
+          if (result.meta.requestStatus === 'fulfilled') {
+            alert('✅ Cập nhật thông tin nhân viên thành công!');
+            onClose();
+          } else {
+            alert('❌ Có lỗi xảy ra khi cập nhật thông tin!');
+          }
+        });
+      }
     } else {
-      // Add mode
-      dispatch(addEmployee(formData)).then(() => {
-        onClose();
-      });
+      // Add mode - Xác nhận thêm
+      if (window.confirm(`Bạn có chắc chắn muốn thêm nhân viên "${formData.fullName}"?`)) {
+        dispatch(addEmployee(formData)).then((result) => {
+          if (result.meta.requestStatus === 'fulfilled') {
+            alert('✅ Thêm nhân viên mới thành công!');
+            onClose();
+          } else {
+            alert('❌ Có lỗi xảy ra khi thêm nhân viên!');
+          }
+        });
+      }
     }
   };
 
@@ -118,7 +158,7 @@ function EmployeeForm({ employee, onClose }) {
       <div className="modal-content">
         <div className="modal-header">
           <h3>{employee ? 'Sửa thông tin nhân viên' : 'Thêm nhân viên mới'}</h3>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <button className="close-btn" onClick={handleClose} title="Đóng form">×</button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -205,11 +245,11 @@ function EmployeeForm({ employee, onClose }) {
           </div>
 
           <div className="form-actions">
-            <button type="button" className="btn btn-cancel" onClick={onClose}>
+            <button type="button" className="btn btn-cancel" onClick={handleClose}>
               Hủy
             </button>
             <button type="submit" className="btn btn-submit" disabled={loading}>
-              {loading ? 'Đang xử lý...' : employee ? 'Cập nhật' : 'Thêm mới'}
+              {loading ? 'Đang xử lý...' : employee ? '💾 Cập nhật' : '➕ Thêm mới'}
             </button>
           </div>
         </form>
