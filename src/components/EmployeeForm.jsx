@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addEmployee, editEmployee, selectLoading } from '../redux/slice/employeeSlice';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 import './Employee.css';
 
-// Danh sách phòng ban tĩnh
 const DEPARTMENTS = [
   'Engineering',
   'Quality Assurance',
@@ -16,7 +15,6 @@ const DEPARTMENTS = [
   'Marketing'
 ];
 
-// Danh sách chức vụ tĩnh
 const POSITIONS = [
   'Software Engineer',
   'Senior Software Engineer',
@@ -45,214 +43,193 @@ function EmployeeForm({ employee, onClose }) {
   const dispatch = useDispatch();
   const loading = useSelector(selectLoading);
 
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    department: '',
-    position: '',
-    startDate: ''
-  });
-
-  const [initialData, setInitialData] = useState({
-    fullName: '',
-    email: '',
-    department: '',
-    position: '',
-    startDate: ''
-  });
-
-  useEffect(() => {
-    console.log('Employee data:', employee);
-    if (employee) {
-      // Đảm bảo department có trong danh sách DEPARTMENTS
-      const validDepartment = DEPARTMENTS.includes(employee.department) 
-        ? employee.department 
-        : '';
-      
-      // Đảm bảo position có trong danh sách POSITIONS
-      const validPosition = POSITIONS.includes(employee.position) 
-        ? employee.position 
-        : '';
-      
-      console.log('Setting department:', validDepartment, 'Original:', employee.department);
-      console.log('Setting position:', validPosition, 'Original:', employee.position);
-      
-      const data = {
-        fullName: employee.fullName || '',
-        email: employee.email || '',
-        department: validDepartment,
-        position: validPosition,
-        startDate: employee.startDate || ''
-      };
-      
-      setFormData(data);
-      setInitialData(data);
-    } else {
-      // Reset form khi thêm mới
-      const emptyData = {
-        fullName: '',
-        email: '',
-        department: '',
-        position: '',
-        startDate: ''
-      };
-      setFormData(emptyData);
-      setInitialData(emptyData);
-    }
-  }, [employee]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    console.log('Field changed:', name, 'Value:', value);
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Initial values cho Formik
+  const initialValues = {
+    fullName: employee?.fullName || '',
+    email: employee?.email || '',
+    department: DEPARTMENTS.includes(employee?.department) ? employee.department : '',
+    position: POSITIONS.includes(employee?.position) ? employee.position : '',
+    startDate: employee?.startDate || ''
   };
 
-  const handleClose = () => {
-    // Kiểm tra xem có thay đổi nào chưa lưu không
-    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialData);
-    
-    if (hasChanges) {
-      if (window.confirm('⚠️ Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn đóng?')) {
-        onClose();
-      }
-    } else {
-      onClose();
+  // Validate function cho Formik
+  const validate = (values) => {
+    const errors = {};
+
+    if (!values.fullName) {
+      errors.fullName = 'Họ và tên là bắt buộc';
+    } else if (values.fullName.length < 3) {
+      errors.fullName = 'Họ và tên phải có ít nhất 3 ký tự';
     }
+
+    if (!values.email) {
+      errors.email = 'Email là bắt buộc';
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
+      errors.email = 'Email không hợp lệ';
+    }
+
+    if (!values.department) {
+      errors.department = 'Vui lòng chọn phòng ban';
+    }
+
+    if (!values.position) {
+      errors.position = 'Vui lòng chọn chức vụ';
+    }
+
+    if (!values.startDate) {
+      errors.startDate = 'Ngày vào làm là bắt buộc';
+    }
+
+    return errors;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  // Handle submit với Formik
+  const handleFormSubmit = (values, { setSubmitting }) => {
     if (employee) {
       // Edit mode - Xác nhận sửa
-      if (window.confirm(`Bạn có chắc chắn muốn cập nhật thông tin nhân viên "${formData.fullName}"?`)) {
-        dispatch(editEmployee({ ...formData, id: employee.id })).then((result) => {
+      if (window.confirm(`Bạn có chắc chắn muốn cập nhật thông tin nhân viên "${values.fullName}"?`)) {
+        dispatch(editEmployee({ ...values, id: employee.id })).then((result) => {
+          setSubmitting(false);
           if (result.meta.requestStatus === 'fulfilled') {
-            alert('✅ Cập nhật thông tin nhân viên thành công!');
+            alert('Cập nhật thành công!');
             onClose();
           } else {
-            alert('❌ Có lỗi xảy ra khi cập nhật thông tin!');
+            alert('Có lỗi!');
           }
         });
+      } else {
+        setSubmitting(false);
       }
     } else {
       // Add mode - Xác nhận thêm
-      if (window.confirm(`Bạn có chắc chắn muốn thêm nhân viên "${formData.fullName}"?`)) {
-        dispatch(addEmployee(formData)).then((result) => {
+      if (window.confirm(`Bạn có chắc chắn muốn thêm nhân viên "${values.fullName}"?`)) {
+        dispatch(addEmployee(values)).then((result) => {
+          setSubmitting(false);
           if (result.meta.requestStatus === 'fulfilled') {
-            alert('✅ Thêm nhân viên mới thành công!');
+            alert('Thêm nhân viên thành công!');
             onClose();
           } else {
-            alert('❌ Có lỗi xảy ra khi thêm nhân viên!');
+            alert('Có lỗi!');
           }
         });
+      } else {
+        setSubmitting(false);
       }
     }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h3>{employee ? 'Sửa thông tin nhân viên' : 'Thêm nhân viên mới'}</h3>
-          <button className="close-btn" onClick={handleClose} title="Đóng form">×</button>
-        </div>
+    <div className="form-container">
+      <div className="form-content">
+        <h2 style={{ marginBottom: '30px', color: '#333', borderBottom: '2px solid #4CAF50', paddingBottom: '10px' }}>
+          {employee ? 'Chỉnh sửa thông tin nhân viên' : 'Thêm nhân viên mới'}
+        </h2>
+        <Formik
+          initialValues={initialValues}
+          validate={validate}
+          onSubmit={handleFormSubmit}
+          enableReinitialize
+        >
+          {({ errors, touched, isSubmitting, dirty }) => (
+            <>
+              <Form>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="fullName">Họ và tên *</label>
+                    <Field
+                      type="text"
+                      id="fullName"
+                      name="fullName"
+                      placeholder="Nhập họ và tên"
+                      className={errors.fullName && touched.fullName ? 'error-field' : ''}
+                    />
+                    <ErrorMessage name="fullName" component="div" className="error-message" />
+                  </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="fullName">Họ và tên *</label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
-                placeholder="Nhập họ và tên"
-              />
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="email">Email *</label>
+                    <Field
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="Nhập email"
+                      className={errors.email && touched.email ? 'error-field' : ''}
+                    />
+                    <ErrorMessage name="email" component="div" className="error-message" />
+                  </div>
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="email">Email *</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                placeholder="Nhập email"
-              />
-            </div>
-          </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="department">Phòng ban *</label>
+                    <Field
+                      as="select"
+                      id="department"
+                      name="department"
+                      className={`department-select ${errors.department && touched.department ? 'error-field' : ''}`}
+                    >
+                      <option value="">-- Chọn phòng ban --</option>
+                      {DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </Field>
+                    <ErrorMessage name="department" component="div" className="error-message" />
+                  </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="department">Phòng ban *</label>
-              <select
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                required
-                className="department-select"
-              >
-                <option value="">-- Chọn phòng ban --</option>
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="position">Chức vụ *</label>
+                    <Field
+                      as="select"
+                      id="position"
+                      name="position"
+                      className={`position-select ${errors.position && touched.position ? 'error-field' : ''}`}
+                    >
+                      <option value="">-- Chọn chức vụ --</option>
+                      {POSITIONS.map((pos) => (
+                        <option key={pos} value={pos}>
+                          {pos}
+                        </option>
+                      ))}
+                    </Field>
+                    <ErrorMessage name="position" component="div" className="error-message" />
+                  </div>
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="position">Chức vụ *</label>
-              <select
-                id="position"
-                name="position"
-                value={formData.position}
-                onChange={handleChange}
-                required
-                className="position-select"
-              >
-                <option value="">-- Chọn chức vụ --</option>
-                {POSITIONS.map((pos) => (
-                  <option key={pos} value={pos}>
-                    {pos}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="startDate">Ngày vào làm *</label>
+                    <Field
+                      type="date"
+                      id="startDate"
+                      name="startDate"
+                      className={errors.startDate && touched.startDate ? 'error-field' : ''}
+                    />
+                    <ErrorMessage name="startDate" component="div" className="error-message" />
+                  </div>
+                </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="startDate">Ngày vào làm *</label>
-              <input
-                type="date"
-                id="startDate"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-actions">
-            <button type="button" className="btn btn-cancel" onClick={handleClose}>
-              Hủy
-            </button>
-            <button type="submit" className="btn btn-submit" disabled={loading}>
-              {loading ? 'Đang xử lý...' : employee ? '💾 Cập nhật' : '➕ Thêm mới'}
-            </button>
-          </div>
-        </form>
+                <div className="form-actions">
+                  <button 
+                    type="button" 
+                    className="btn btn-cancel" 
+                    onClick={() => onClose()}
+                  >
+                    Hủy
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-submit" 
+                    disabled={loading || isSubmitting}
+                  >
+                    {loading || isSubmitting ? 'Đang xử lý...' : employee ? 'Cập nhật' : 'Thêm'}
+                  </button>
+                </div>
+              </Form>
+            </>
+          )}
+        </Formik>
       </div>
     </div>
   );

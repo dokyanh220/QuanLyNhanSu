@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getEmployees, removeEmployee, selectEmployeeList, selectLoading } from '../redux/slice/employeeSlice';
-import EmployeeForm from './EmployeeForm';
+import { useNavigate } from 'react-router-dom';
+import { getEmployees, selectEmployeeList, selectLoading } from '../redux/slice/employeeSlice';
 import './Employee.css';
 
 // Danh sách phòng ban tĩnh (đặt ngoài component để tránh re-render)
@@ -19,10 +19,9 @@ const DEPARTMENTS = [
 
 function EmployeeList() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const employees = useSelector(selectEmployeeList);
   const loading = useSelector(selectLoading);
-  const [showForm, setShowForm] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
@@ -65,32 +64,15 @@ function EmployeeList() {
   }, [employees, searchTerm, sortOrder, selectedDepartment]);
 
   const handleDelete = (employee) => {
-    if (window.confirm(`⚠️ Bạn có chắc chắn muốn xóa nhân viên "${employee.fullName}"?\n\nThao tác này không thể hoàn tác!`)) {
-      dispatch(removeEmployee(employee.id)).then((result) => {
-        if (result.meta.requestStatus === 'fulfilled') {
-          alert('✅ Xóa nhân viên thành công!');
-          dispatch(getEmployees());
-        } else {
-          alert('❌ Có lỗi xảy ra khi xóa nhân viên!');
-        }
-      });
-    }
+    navigate(`/employees/remove/${employee.id}`);
   };
 
   const handleEdit = (employee) => {
-    setEditingEmployee(employee);
-    setShowForm(true);
+    navigate(`/employees/edit/${employee.id}`);
   };
 
   const handleAdd = () => {
-    setEditingEmployee(null);
-    setShowForm(true);
-  };
-
-  const handleCloseForm = () => {
-    setShowForm(false);
-    setEditingEmployee(null);
-    dispatch(getEmployees());
+    navigate('/employees/add-new');
   };
 
   if (loading) {
@@ -105,13 +87,6 @@ function EmployeeList() {
           + Thêm nhân viên
         </button>
       </div>
-
-      {showForm && (
-        <EmployeeForm
-          employee={editingEmployee}
-          onClose={handleCloseForm}
-        />
-      )}
 
       <div className="filter-section">
         <div className="search-box">
